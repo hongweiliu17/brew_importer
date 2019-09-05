@@ -1,0 +1,6 @@
+# This script can help you
+# 1 Import one module build including its rpm packages from brew production to brew-qa
+# 2 Add tag to the imported module build
+# It needs two args:
+#   module_nvr: the nvr of module build
+#   tag: that you want to tag to the imported module build
