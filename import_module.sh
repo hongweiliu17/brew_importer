@@ -17,29 +17,29 @@ brew buildinfo $module_nvr > buildinfo.txt
 content_koji_tag=$(cat buildinfo.txt | grep 'content_koji_tag'| rev | cut -d \' -f2 | rev)
 
 function get_rpm_build_in_module_build(){
-        echo "===get rpm build with the content_koji_tag==="
+    echo "===get rpm build with the content_koji_tag==="
     rpm_NVRs=$(brew list-tagged $content_koji_tag | grep "mbs" | sed "s/$content_koji_tag  mbs//")
 }
 
 function download_import_tag_rpm_build() {
-        for NVR in $rpm_NVRs; do
-        cd ${dir}
-        mkdir $NVR
-        cd $NVR
-        echo "===start to download rpm for rpm build $NVR==="
-        brew download-build $NVR
-        echo "===start to import rpm build $NVR==="
-        package_name=$(echo ${NVR%-*-*})
-        cat <<EOF > ${dir}/importer.sh
+    for NVR in $rpm_NVRs; do
+    cd ${dir}
+    mkdir $NVR
+    cd $NVR
+    echo "===start to download rpm for rpm build $NVR==="
+    brew download-build $NVR
+    echo "===start to import rpm build $NVR==="
+    package_name=$(echo ${NVR%-*-*})
+    cat <<EOF > ${dir}/importer.sh
 alias koji='brew --user=root --password=redhat'
 koji import --create-build /code/workspace/brew_importer/module_build/$module_nvr/${NVR}/*.rpm
 koji add-tag $content_koji_tag
 koji add-pkg --owner root $content_koji_tag $package_name
 koji tag_build $content_koji_tag $NVR
 EOF
-        cd /root/brew-container
-        docker-compose exec -T brew-hub sh /code/workspace/brew_importer/module_build/${module_nvr}/importer.sh
-        done
+    cd /root/brew-container
+    docker-compose exec -T brew-hub sh /code/workspace/brew_importer/module_build/${module_nvr}/importer.sh
+    done
 }
 
 function download_edit_metadata_json_file() {
@@ -72,7 +72,7 @@ function dowload_modulemd_files() {
 }
 
 function import_module_build() {
-        echo "===start to import module build==="
+    echo "===start to import module build==="
     package_name=$(echo ${module_nvr%-*-*})
     cat <<EOF > ${dir}/importer.sh
 alias koji="brew --user=root --password=redhat"
@@ -85,8 +85,8 @@ koji add-tag $tag
 koji add-pkg --owner root ${tag} ${package_name}
 koji tag_build $tag $module_nvr
 EOF
-        cd /root/brew-container
-        docker-compose exec -T brew-hub sh /code/workspace/brew_importer/module_build/${module_nvr}/importer.sh
+    cd /root/brew-container
+    docker-compose exec -T brew-hub sh /code/workspace/brew_importer/module_build/${module_nvr}/importer.sh
 }
 
 function delete_downloaded_file() {
