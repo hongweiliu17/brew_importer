@@ -95,7 +95,6 @@ function delete_downloaded_file() {
 	rm -fr $module_nvr
 }
 
-get_buildinfo
 get_content_koji_tag
 get_rpm_build_in_module_build
 download_import_tag_rpm_build
