@@ -1,3 +1,5 @@
+
+#!/bin/bash
 # This script can help you
 # 1 Import one module build including its rpm packages from brew production to brew-qa
 # 2 Add tag to the imported module build
@@ -10,9 +12,10 @@ tag=$2
 rpm_NVRs=()
 modulemd_files=()
 baseURl="http://download.eng.bos.redhat.com"
-mkdir -p module_build/$module_nvr
-cd module_build/$module_nvr
+mkdir -p import_build/$module_nvr
+cd import_build/$module_nvr
 dir=$(pwd)
+
 brew buildinfo $module_nvr > buildinfo.txt
 content_koji_tag=$(cat buildinfo.txt | grep 'content_koji_tag'| rev | cut -d \' -f2 | rev)
 
@@ -32,13 +35,13 @@ function download_import_tag_rpm_build() {
     package_name=$(echo ${NVR%-*-*})
     cat <<EOF > ${dir}/importer.sh
 alias koji='brew --user=root --password=redhat'
-koji import --create-build /code/workspace/brew_importer/module_build/$module_nvr/${NVR}/*.rpm
+koji import --create-build /code/workspace/brew_qa_build_import/import_build/$module_nvr/${NVR}/*.rpm
 koji add-tag $content_koji_tag
 koji add-pkg --owner root $content_koji_tag $package_name
 koji tag_build $content_koji_tag $NVR
 EOF
     cd /root/brew-container
-    docker-compose exec -T brew-hub sh /code/workspace/brew_importer/module_build/${module_nvr}/importer.sh
+    docker-compose exec -T brew-hub sh /code/workspace/brew_qa_build_import/import_build/${module_nvr}/importer.sh
     done
 }
 
@@ -79,14 +82,14 @@ alias koji="brew --user=root --password=redhat"
 koji call addBType module
 koji grant-cg-access root module-build-service --new
 # Import the module build by:
-cd /code/workspace/brew_importer/module_build/${module_nvr}
+cd /code/workspace/brew_qa_build_import/import_build/${module_nvr}
 koji import-cg metadata.json files
 koji add-tag $tag
 koji add-pkg --owner root ${tag} ${package_name}
 koji tag_build $tag $module_nvr
 EOF
     cd /root/brew-container
-    docker-compose exec -T brew-hub sh /code/workspace/brew_importer/module_build/${module_nvr}/importer.sh
+    docker-compose exec -T brew-hub sh /code/workspace/brew_qa_build_import/import_build/${module_nvr}/importer.sh
 }
 
 function delete_downloaded_file() {
@@ -95,7 +98,6 @@ function delete_downloaded_file() {
 	rm -fr $module_nvr
 }
 
-get_content_koji_tag
 get_rpm_build_in_module_build
 download_import_tag_rpm_build
 download_edit_metadata_json_file
